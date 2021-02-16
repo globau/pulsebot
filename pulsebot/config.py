@@ -4,7 +4,7 @@
 
 import fnmatch
 from collections import defaultdict
-from ConfigParser import RawConfigParser
+from configparser import RawConfigParser
 
 
 class DispatchConfig(object):
@@ -13,7 +13,7 @@ class DispatchConfig(object):
 
     def get(self, key):
         result = self._data.get(key, set())
-        for k, v in self._data.iteritems():
+        for k, v in self._data.items():
             if k == '*' or ('*' in k and fnmatch.fnmatch(key, k)):
                 result |= v
         return result
@@ -65,15 +65,6 @@ class Config(object):
                     self.bugzilla_leave_open.add(branch)
 
 
-def get_input(prompt):
-    """Get decoded input from the terminal (equivalent to python 3's ``input``).
-    """
-    if sys.version_info.major >= 3:
-        return input(prompt)
-    else:
-        return raw_input(prompt).decode('utf8')
-
-
 if __name__ == '__main__':
     import sys
 
@@ -97,7 +88,7 @@ if __name__ == '__main__':
                                                                    name)
                     while True:
                         sys.stderr.write(prompt)
-                        value = get_input('')
+                        value = input('')
                         if value:
                             break
 

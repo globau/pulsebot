@@ -8,12 +8,12 @@ import re
 import sys
 import threading
 import time
-import urlparse
+import urllib.parse as urlparse
 import unittest
 from collections import (
     defaultdict,
 )
-from Queue import Queue, Empty
+from queue import Queue, Empty
 from pulsebot.bugzilla import (
     Bugzilla,
     BugzillaError,
@@ -163,7 +163,7 @@ class PulseDispatcher(object):
                     info_for_bugs[bugs[0]] = BugInfo(bugs[0], push['user'])
                 info_for_bugs[bugs[0]].add_changeset(cs)
 
-        for info in info_for_bugs.itervalues():
+        for info in info_for_bugs.values():
             yield info
 
     @staticmethod
@@ -333,14 +333,14 @@ class TestPulseDispatcher(unittest.TestCase):
             "https://server/repo/rev/1234567890ab - Ann O'nymous - "
             'Bug 42 - Changed something',
         ]
-        self.assertEquals(list(PulseDispatcher.create_messages(push)), result)
+        self.assertEqual(list(PulseDispatcher.create_messages(push)), result)
 
         push['changesets'].append(self.CHANGESETS[1])
         result.append(
             "https://server/repo/rev/234567890abc - Ann O'nymous - "
             'Fixup for bug 42 - Changed something else',
         )
-        self.assertEquals(list(PulseDispatcher.create_messages(push)), result)
+        self.assertEqual(list(PulseDispatcher.create_messages(push)), result)
 
         push['changesets'].extend(self.CHANGESETS[2:5])
         result.extend((
@@ -351,46 +351,46 @@ class TestPulseDispatcher(unittest.TestCase):
             'https://server/repo/rev/567890abcdef - Anon Ymous - '
             'Bug 43 - consectetur adipiscing elit',
         ))
-        self.assertEquals(list(PulseDispatcher.create_messages(push)), result)
+        self.assertEqual(list(PulseDispatcher.create_messages(push)), result)
 
-        self.assertEquals(list(PulseDispatcher.create_messages(push, 5)),
+        self.assertEqual(list(PulseDispatcher.create_messages(push, 5)),
                           result)
 
         push['changesets'].append(self.CHANGESETS[5])
-        self.assertEquals(list(PulseDispatcher.create_messages(push, 5)), [
+        self.assertEqual(list(PulseDispatcher.create_messages(push, 5)), [
             'https://server/repo/pushloghtml?startID=1&endID=2 - 6 changesets '
             '(bugs 42, 43, 44)'
         ])
-        self.assertEquals(list(PulseDispatcher.create_messages(push, 5, 1)), [
+        self.assertEqual(list(PulseDispatcher.create_messages(push, 5, 1)), [
             'https://server/repo/pushloghtml?startID=1&endID=2 - 6 changesets '
             '(bugs 42 and 2 other bugs)'
         ])
-        self.assertEquals(list(PulseDispatcher.create_messages(push, 5, 2)), [
+        self.assertEqual(list(PulseDispatcher.create_messages(push, 5, 2)), [
             'https://server/repo/pushloghtml?startID=1&endID=2 - 6 changesets '
             '(bugs 42, 43 and 1 other bug)'
         ])
 
         push['changesets'].append(self.CHANGESETS[6])
-        self.assertEquals(list(PulseDispatcher.create_messages(push, 5)), [
+        self.assertEqual(list(PulseDispatcher.create_messages(push, 5)), [
             'https://server/repo/pushloghtml?startID=1&endID=2 - 7 changesets '
             '(bugs 42, 43, 44, 45)'
         ])
-        self.assertEquals(list(PulseDispatcher.create_messages(push, 5, 1)), [
+        self.assertEqual(list(PulseDispatcher.create_messages(push, 5, 1)), [
             'https://server/repo/pushloghtml?startID=1&endID=2 - 7 changesets '
             '(bugs 42 and 3 other bugs)'
         ])
-        self.assertEquals(list(PulseDispatcher.create_messages(push, 5, 2)), [
+        self.assertEqual(list(PulseDispatcher.create_messages(push, 5, 2)), [
             'https://server/repo/pushloghtml?startID=1&endID=2 - 7 changesets '
             '(bugs 42, 43 and 2 other bugs)'
         ])
 
         push['changesets'].append(self.CHANGESETS[7])
-        self.assertEquals(list(PulseDispatcher.create_messages(push, 5)), [
+        self.assertEqual(list(PulseDispatcher.create_messages(push, 5)), [
             'https://server/repo/pushloghtml?startID=1&endID=2 - 8 changesets '
             '- Merge branch into repo'
         ])
         # Merges are always grouped
-        self.assertEquals(list(PulseDispatcher.create_messages(push)), [
+        self.assertEqual(list(PulseDispatcher.create_messages(push)), [
             'https://server/repo/pushloghtml?startID=1&endID=2 - 8 changesets '
             '- Merge branch into repo'
         ])
@@ -412,13 +412,13 @@ class TestPulseDispatcher(unittest.TestCase):
                   'desc': 'Bug 42 - Changed something',
                   'is_backout': False}],
         }
-        self.assertEquals(munge(push), result)
+        self.assertEqual(munge(push), result)
 
         push['changesets'].append(self.CHANGESETS[1])
         result[42].append({'revlink': 'https://server/repo/rev/234567890abc',
                            'desc': 'Fixup for bug 42 - Changed something else',
                            'is_backout': False})
-        self.assertEquals(munge(push), result)
+        self.assertEqual(munge(push), result)
 
         push['changesets'].extend(self.CHANGESETS[2:5])
         result[43] = [
@@ -432,7 +432,7 @@ class TestPulseDispatcher(unittest.TestCase):
              'desc': 'Bug 43 - consectetur adipiscing elit',
              'is_backout': False},
         ]
-        self.assertEquals(munge(push), result)
+        self.assertEqual(munge(push), result)
 
         push['changesets'].append({
             'author': 'Sheriff',
@@ -444,7 +444,7 @@ class TestPulseDispatcher(unittest.TestCase):
              'desc': 'Backout bug 41 for bustage',
              'is_backout': True},
         ]
-        self.assertEquals(munge(push), result)
+        self.assertEqual(munge(push), result)
 
     def test_bugzilla_reporter(self):
         class TestBugzilla(object):
@@ -470,7 +470,7 @@ class TestPulseDispatcher(unittest.TestCase):
             def update_bug(self, bug, **kwargs):
                 # TODO: Handle keywords and whiteboard and add a test for the
                 # checkin-needed removal.
-                for k, v in kwargs.iteritems():
+                for k, v in kwargs.items():
                     if k == 'comment':
                         self.post_comment(bug, v['body'])
                     else:
@@ -517,7 +517,7 @@ class TestPulseDispatcher(unittest.TestCase):
                  'Changed something'],
         }
         do_push(push)
-        self.assertEquals(bz.comments, comments)
+        self.assertEqual(bz.comments, comments)
 
         bz.clear()
         push['changesets'].append(self.CHANGESETS[1])
@@ -526,7 +526,7 @@ class TestPulseDispatcher(unittest.TestCase):
             'https://server/repo/rev/234567890abc\n'
             'Fixup for bug 42 - Changed something else')
         do_push(push)
-        self.assertEquals(bz.comments, comments)
+        self.assertEqual(bz.comments, comments)
 
         bz.clear()
         push['changesets'].extend(self.CHANGESETS[2:5])
@@ -540,7 +540,7 @@ class TestPulseDispatcher(unittest.TestCase):
             'consectetur adipiscing elit'
         ]
         do_push(push)
-        self.assertEquals(bz.comments, comments)
+        self.assertEqual(bz.comments, comments)
 
         push['changesets'].append({
             'author': 'Sheriff',
@@ -553,7 +553,7 @@ class TestPulseDispatcher(unittest.TestCase):
             'Backout for bustage',
         ]
         do_push(push)
-        self.assertEquals(bz.comments, comments)
+        self.assertEqual(bz.comments, comments)
 
         bz.clear()
         # If there is already a comment for the landed changeset, don't
@@ -562,40 +562,40 @@ class TestPulseDispatcher(unittest.TestCase):
         comments = {42: bz.get_comments(42)}
         push['changesets'] = self.CHANGESETS[:1]
         do_push(push)
-        self.assertEquals(bz.comments, comments)
+        self.assertEqual(bz.comments, comments)
 
         push['changesets'].append(self.CHANGESETS[1])
         comments[42].append(
             'https://server/repo/rev/234567890abc\n'
             'Fixup for bug 42 - Changed something else')
         do_push(push)
-        self.assertEquals(bz.comments, comments)
+        self.assertEqual(bz.comments, comments)
 
         # Bug status should be updated
         bz.clear()
         do_push(push)
-        self.assertEquals(bz.data, {42: {
+        self.assertEqual(bz.data, {42: {
             'status': 'RESOLVED',
             'resolution': 'FIXED',
         }})
 
         bz.clear()
         do_push(push, leave_open=True)
-        self.assertEquals(bz.data, {})
+        self.assertEqual(bz.data, {})
 
         bz.clear()
         bz.fields[42] = {'keywords': {'leave-open'}}
         do_push(push)
-        self.assertEquals(bz.data, {})
+        self.assertEqual(bz.data, {})
 
         bz.clear()
         bz.fields[42] = {'status': 'VERIFIED'}
         do_push(push)
-        self.assertEquals(bz.data, {})
+        self.assertEqual(bz.data, {})
 
     def test_bugzilla_summary(self):
         def summary_equals(desc, summary):
-            self.assertEquals(list(PulseDispatcher.bugzilla_summary({
+            self.assertEqual(list(PulseDispatcher.bugzilla_summary({
                 'revlink': 'https://server/repo/rev/1234567890ab',
                 'desc': desc,
             })), [
@@ -681,10 +681,10 @@ class TestPulseDispatcher(unittest.TestCase):
 
         bugzilla_branches = ['repoa', 'repob'], {}
         test = TestPulseDispatcher(bugzilla_branches, push('repo'))
-        self.assertEquals(test.bugzilla, [])
+        self.assertEqual(test.bugzilla, [])
 
         test = TestPulseDispatcher(bugzilla_branches, push('repoa'))
-        self.assertEquals(test.bugzilla, [{
+        self.assertEqual(test.bugzilla, [{
             'bug': 42,
             'pusher': 'foo@bar.com',
             'leave_open': False,
@@ -696,7 +696,7 @@ class TestPulseDispatcher(unittest.TestCase):
         }])
 
         test = TestPulseDispatcher(bugzilla_branches, push('repob'))
-        self.assertEquals(test.bugzilla, [{
+        self.assertEqual(test.bugzilla, [{
             'bug': 42,
             'pusher': 'foo@bar.com',
             'leave_open': False,
@@ -708,13 +708,13 @@ class TestPulseDispatcher(unittest.TestCase):
         }])
 
         test = TestPulseDispatcher(bugzilla_branches, push('repoc'))
-        self.assertEquals(test.bugzilla, [])
+        self.assertEqual(test.bugzilla, [])
 
         bugzilla_branches = DispatchConfig()
         bugzilla_branches.add('repo*')
         bugzilla_branches = bugzilla_branches, {}
         test = TestPulseDispatcher(bugzilla_branches, push('repo'))
-        self.assertEquals(test.bugzilla, [{
+        self.assertEqual(test.bugzilla, [{
             'bug': 42,
             'pusher': 'foo@bar.com',
             'leave_open': False,
@@ -726,7 +726,7 @@ class TestPulseDispatcher(unittest.TestCase):
         }])
 
         test = TestPulseDispatcher(bugzilla_branches, push('repoa'))
-        self.assertEquals(test.bugzilla, [{
+        self.assertEqual(test.bugzilla, [{
             'bug': 42,
             'pusher': 'foo@bar.com',
             'leave_open': False,
@@ -738,13 +738,13 @@ class TestPulseDispatcher(unittest.TestCase):
         }])
 
         test = TestPulseDispatcher(bugzilla_branches, push('foo'))
-        self.assertEquals(test.bugzilla, [])
+        self.assertEqual(test.bugzilla, [])
 
         bugzilla_branches = DispatchConfig()
         bugzilla_branches.add('repo*')
         bugzilla_branches = bugzilla_branches, {'repoa'}
         test = TestPulseDispatcher(bugzilla_branches, push('repo'))
-        self.assertEquals(test.bugzilla, [{
+        self.assertEqual(test.bugzilla, [{
             'bug': 42,
             'pusher': 'foo@bar.com',
             'leave_open': False,
@@ -756,7 +756,7 @@ class TestPulseDispatcher(unittest.TestCase):
         }])
 
         test = TestPulseDispatcher(bugzilla_branches, push('repoa'))
-        self.assertEquals(test.bugzilla, [{
+        self.assertEqual(test.bugzilla, [{
             'bug': 42,
             'pusher': 'foo@bar.com',
             'leave_open': True,
@@ -768,13 +768,13 @@ class TestPulseDispatcher(unittest.TestCase):
         }])
 
         test = TestPulseDispatcher(bugzilla_branches, push('foo'))
-        self.assertEquals(test.bugzilla, [])
+        self.assertEqual(test.bugzilla, [])
 
         bugzilla_branches = DispatchConfig()
         bugzilla_branches.add('repo*')
         bugzilla_branches = bugzilla_branches, bugzilla_branches
         test = TestPulseDispatcher(bugzilla_branches, push('repo'))
-        self.assertEquals(test.bugzilla, [{
+        self.assertEqual(test.bugzilla, [{
             'bug': 42,
             'pusher': 'foo@bar.com',
             'leave_open': True,
@@ -786,7 +786,7 @@ class TestPulseDispatcher(unittest.TestCase):
         }])
 
         test = TestPulseDispatcher(bugzilla_branches, push('repoa'))
-        self.assertEquals(test.bugzilla, [{
+        self.assertEqual(test.bugzilla, [{
             'bug': 42,
             'pusher': 'foo@bar.com',
             'leave_open': True,
@@ -798,10 +798,10 @@ class TestPulseDispatcher(unittest.TestCase):
         }])
 
         test = TestPulseDispatcher(bugzilla_branches, push('foo'))
-        self.assertEquals(test.bugzilla, [])
+        self.assertEqual(test.bugzilla, [])
 
         test_push = push('repo')
         test_push['changesets'][0]['source-repo'] = \
             'https://github.com/servo/servo'
         test = TestPulseDispatcher(bugzilla_branches, test_push)
-        self.assertEquals(test.bugzilla, [])
+        self.assertEqual(test.bugzilla, [])

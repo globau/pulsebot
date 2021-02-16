@@ -8,8 +8,7 @@ Pulsebot is a bot listening to pulse.mozilla.org for mercurial changes and notif
 The current live setup can be replicated as follows:
 
 ```
-sudo apt-get install python-virtualenv
-virtualenv bot
+python3 -m venv bot
 bot/bin/pip install -r requirements.txt
 ```
 
